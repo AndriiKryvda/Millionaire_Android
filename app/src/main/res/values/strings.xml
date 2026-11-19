@@ -35,13 +35,13 @@
     <string name="action_close">Закрити</string>
     <string name="action_thanks">Дякую</string>
 
-    <string name="field_nickname">Псевдо</string>
+    <string name="field_nickname">Ім\'я</string>
     <string name="nickname_counter">%1$d / %2$d символів</string>
     <string name="label_select_age_group">Оберіть вікову групу</string>
-    <string name="error_nickname_too_short">Псевдо закоротке: мінімум 2 символи</string>
-    <string name="error_nickname_too_long">Псевдо завелике: максимум 16 символів</string>
+    <string name="error_nickname_too_short">Ім\'я закоротке: мінімум 2 символи</string>
+    <string name="error_nickname_too_long">Ім\'я завелике: максимум 16 символів</string>
     <string name="error_nickname_invalid">Дозволені лише літери, цифри, пробіл, «_», «-» та апостроф</string>
-    <string name="error_nickname_taken">Таке псевдо вже зайняте</string>
+    <string name="error_nickname_taken">Таке ім\'я вже зайняте</string>
     <string name="error_select_age_group">Оберіть вікову групу</string>
     <string name="dialog_delete_player_title">Видалити гравця?</string>
     <string name="dialog_delete_player_message">Разом із гравцем буде видалено всю його статистику.</string>
@@ -73,6 +73,8 @@
     <string name="action_next">Далі</string>
     <string name="action_see_result">До результату</string>
     <string name="action_exit">Вийти</string>
+    <string name="action_exit_to_menu">Вийти в меню</string>
+    <string name="confirm_exit_app">Ви впевнені, що хочете вийти з додатку?</string>
     <string name="action_stay">Продовжити гру</string>
     <string name="action_back_to_menu">У меню</string>
     <string name="action_play_again">Грати знову</string>

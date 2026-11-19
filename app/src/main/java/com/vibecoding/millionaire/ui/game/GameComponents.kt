@@ -13,18 +13,17 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -49,6 +48,7 @@ import com.vibecoding.millionaire.R
 import com.vibecoding.millionaire.domain.game.Confidence
 import com.vibecoding.millionaire.domain.game.FriendHint
 import com.vibecoding.millionaire.domain.game.PrizeLadder
+import com.vibecoding.millionaire.domain.model.AnswerOption
 import com.vibecoding.millionaire.ui.common.formatGroups
 import com.vibecoding.millionaire.ui.theme.Gold
 import com.vibecoding.millionaire.ui.theme.GoldSoft
@@ -107,22 +107,24 @@ fun AnswerOptionButton(
     }
 }
 
+/** Prize ladder shown under the answers: a horizontal row from 1 ₴ up to 1 000 ₴. */
 @Composable
 fun PrizeLadderPanel(currentIndex: Int, modifier: Modifier = Modifier) {
-    Column(modifier = modifier) {
+    val listState = rememberLazyListState()
+    Column(modifier = modifier.fillMaxWidth()) {
         Text(
             text = stringResource(R.string.ladder_title),
             style = MaterialTheme.typography.labelSmall,
             color = TextSecondary,
             modifier = Modifier.padding(bottom = 4.dp),
         )
-        LazyColumn(
-            modifier = Modifier.fillMaxHeight(),
-            reverseLayout = true,
-            verticalArrangement = Arrangement.spacedBy(3.dp),
+        LazyRow(
+            state = listState,
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             itemsIndexed(PrizeLadder.prizes) { index, prize ->
-                LadderRow(
+                LadderChip(
                     index = index,
                     prize = prize,
                     currentIndex = currentIndex,
@@ -130,17 +132,23 @@ fun PrizeLadderPanel(currentIndex: Int, modifier: Modifier = Modifier) {
             }
         }
     }
+    LaunchedEffect(currentIndex) {
+        // Keep the running step on screen by scrolling a few steps ahead of it into view.
+        listState.animateScrollToItem((currentIndex - LADDER_LEADING_STEPS).coerceAtLeast(0))
+    }
 }
 
+private const val LADDER_LEADING_STEPS = 3
+
 @Composable
-private fun LadderRow(index: Int, prize: Int, currentIndex: Int) {
+private fun LadderChip(index: Int, prize: Int, currentIndex: Int) {
     val isCurrent = index == currentIndex
     val isPassed = index < currentIndex
     val isSafe = PrizeLadder.isSafeHaven(index)
     val background = when {
         isCurrent -> Gold
         isSafe && !isPassed -> Purple
-        else -> Color.Transparent
+        else -> Navy.copy(alpha = 0.55f)
     }
     val textColor = when {
         isCurrent -> Navy
@@ -150,17 +158,18 @@ private fun LadderRow(index: Int, prize: Int, currentIndex: Int) {
     }
     Box(
         modifier = Modifier
-            .fillMaxWidth()
-            .height(21.dp)
-            .clip(RoundedCornerShape(4.dp))
+            .width(60.dp)
+            .height(24.dp)
+            .clip(RoundedCornerShape(5.dp))
             .background(background)
-            .padding(horizontal = 6.dp),
-        contentAlignment = Alignment.CenterEnd,
+            .border(1.dp, Purple.copy(alpha = 0.5f), RoundedCornerShape(5.dp)),
+        contentAlignment = Alignment.Center,
     ) {
         Text(
             text = stringResource(R.string.prize_value, formatGroups(prize)),
             style = MaterialTheme.typography.labelSmall,
             color = textColor,
+            maxLines = 1,
         )
     }
 }
@@ -192,12 +201,29 @@ fun LifelineButton(
     }
 }
 
+/**
+ * Letter shown next to an answer: A, B, C, D from its position in the displayed list, so the letters
+ * always match what the player sees even though the option keys are shuffled for every question.
+ */
+fun displayLetter(displayOrder: List<AnswerOption>, option: AnswerOption): String =
+    when (displayOrder.indexOf(option)) {
+        0 -> "A"
+        1 -> "B"
+        2 -> "C"
+        3 -> "D"
+        else -> option.name
+    }
+
 @Composable
-fun AudienceChartDialog(percentages: Map<com.vibecoding.millionaire.domain.model.AnswerOption, Int>, onDismiss: () -> Unit) {
+fun AudienceChartDialog(
+    percentages: Map<AnswerOption, Int>,
+    displayOrder: List<AnswerOption>,
+    onDismiss: () -> Unit,
+) {
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.dialog_audience_title)) },
-        text = { AudienceChart(percentages) },
+        text = { AudienceChart(percentages = percentages, displayOrder = displayOrder) },
         confirmButton = {
             TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_close), color = Gold) }
         },
@@ -208,7 +234,7 @@ fun AudienceChartDialog(percentages: Map<com.vibecoding.millionaire.domain.model
 }
 
 @Composable
-private fun AudienceChart(percentages: Map<com.vibecoding.millionaire.domain.model.AnswerOption, Int>) {
+private fun AudienceChart(percentages: Map<AnswerOption, Int>, displayOrder: List<AnswerOption>) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -217,7 +243,8 @@ private fun AudienceChart(percentages: Map<com.vibecoding.millionaire.domain.mod
         verticalAlignment = Alignment.Bottom,
         horizontalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        percentages.forEach { (option, percent) ->
+        displayOrder.forEach { option ->
+            val percent = percentages[option] ?: 0
             Column(
                 modifier = Modifier.weight(1f),
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -237,7 +264,7 @@ private fun AudienceChart(percentages: Map<com.vibecoding.millionaire.domain.mod
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = option.name,
+                    text = displayLetter(displayOrder, option),
                     style = MaterialTheme.typography.labelLarge,
                     color = Color.White,
                 )
@@ -249,6 +276,7 @@ private fun AudienceChart(percentages: Map<com.vibecoding.millionaire.domain.mod
 @Composable
 fun PhoneFriendDialog(
     hint: FriendHint,
+    letter: String,
     answerText: String,
     onDismiss: () -> Unit,
 ) {
@@ -284,7 +312,7 @@ fun PhoneFriendDialog(
                         text = stringResource(
                             R.string.friend_answer,
                             stringResource(confidenceRes(hint)),
-                            "${hint.answer.name}. $answerText",
+                            "$letter. $answerText",
                         ),
                         style = MaterialTheme.typography.bodyLarge,
                     )

@@ -95,6 +95,12 @@ class MenuViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Clears the one-shot navigation flag once the game screen has been opened. Without this the
+     * flag stays `true`, so coming back from the game immediately starts a brand new game.
+     */
+    fun onGameNavigated() = _state.update { it.copy(navigateToGame = false) }
+
     fun dismissNotEnoughDialog() {
         _state.update { it.copy(showNotEnoughDialog = false) }
     }

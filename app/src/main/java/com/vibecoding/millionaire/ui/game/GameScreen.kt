@@ -14,7 +14,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -90,7 +92,7 @@ fun GameScreen(
         ConfirmDialog(
             titleRes = R.string.dialog_exit_title,
             messageRes = R.string.dialog_exit_message,
-            confirmRes = R.string.action_exit,
+            confirmRes = R.string.action_exit_to_menu,
             dismissRes = R.string.action_stay,
             onConfirm = viewModel::onExitConfirmed,
             onDismiss = viewModel::onExitCancelled,
@@ -123,17 +125,25 @@ fun GameScreen(
         )
     }
 
-    if (state.showAudience) {
-        game?.audiencePercentages?.let { percentages ->
-            AudienceChartDialog(percentages = percentages, onDismiss = viewModel::onAudienceDismissed)
+    if (game != null) {
+        val percentages = game.audiencePercentages
+        if (state.showAudience && percentages != null) {
+            AudienceChartDialog(
+                percentages = percentages,
+                displayOrder = game.displayOrder,
+                onDismiss = viewModel::onAudienceDismissed,
+            )
         }
-    }
 
-    if (state.showFriend) {
-        val hint = game?.friendHint
-        if (hint != null && game != null) {
+        val hint = game.friendHint
+        if (state.showFriend && hint != null) {
             val answerText = game.questions[game.currentIndex].options[hint.answer].orEmpty()
-            PhoneFriendDialog(hint = hint, answerText = answerText, onDismiss = viewModel::onFriendDismissed)
+            PhoneFriendDialog(
+                hint = hint,
+                letter = displayLetter(game.displayOrder, hint.answer),
+                answerText = answerText,
+                onDismiss = viewModel::onFriendDismissed,
+            )
         }
     }
 }
@@ -167,17 +177,23 @@ private fun GameContent(state: GameUiState, game: GameState, viewModel: GameView
 
         Spacer(modifier = Modifier.height(6.dp))
 
-        Row(modifier = Modifier.weight(1f)) {
-            Column(modifier = Modifier.weight(1f)) {
-                QuestionCard(question = question, prizeRes = PrizeLadder.prizeFor(game.currentIndex))
-                Spacer(modifier = Modifier.height(10.dp))
-                OptionsGrid(game = game, question = question, viewModel = viewModel)
-            }
-            Spacer(modifier = Modifier.width(8.dp))
-            PrizeLadderPanel(currentIndex = game.currentIndex, modifier = Modifier.width(94.dp))
-        }
+        // Question and answers use the whole width of the screen; the prize ladder sits below them.
+        QuestionCard(question = question, prizeRes = PrizeLadder.prizeFor(game.currentIndex))
 
         Spacer(modifier = Modifier.height(10.dp))
+
+        Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.TopStart) {
+            OptionsList(
+                game = game,
+                question = question,
+                viewModel = viewModel,
+                modifier = Modifier.verticalScroll(rememberScrollState()),
+            )
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+        PrizeLadderPanel(currentIndex = game.currentIndex)
+        Spacer(modifier = Modifier.height(12.dp))
         LifelineRow(game = game, viewModel = viewModel)
         Spacer(modifier = Modifier.height(10.dp))
         BottomBar(game = game, viewModel = viewModel)
@@ -213,29 +229,31 @@ private fun QuestionCard(question: Question, prizeRes: Int) {
     }
 }
 
+/** Answers listed one per line as A, B, C, D; options hidden by 50:50 keep an empty placeholder. */
 @Composable
-private fun OptionsGrid(game: GameState, question: Question, viewModel: GameViewModel) {
-    game.displayOrder.chunked(2).forEach { rowOptions ->
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            rowOptions.forEach { option ->
-                val hidden = option in game.hiddenOptions
-                if (hidden) {
-                    Spacer(modifier = Modifier.weight(1f).height(58.dp))
-                } else {
-                    AnswerOptionButton(
-                        letter = option.name,
-                        text = question.options[option].orEmpty(),
-                        visual = visualState(game, option),
-                        modifier = Modifier.weight(1f),
-                        onClick = { viewModel.onSelect(option) },
-                    )
-                }
+private fun OptionsList(
+    game: GameState,
+    question: Question,
+    viewModel: GameViewModel,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        game.displayOrder.forEach { option ->
+            if (option in game.hiddenOptions) {
+                Spacer(modifier = Modifier.fillMaxWidth().height(58.dp))
+            } else {
+                AnswerOptionButton(
+                    letter = displayLetter(game.displayOrder, option),
+                    text = question.options[option].orEmpty(),
+                    visual = visualState(game, option),
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = { viewModel.onSelect(option) },
+                )
             }
         }
-        Spacer(modifier = Modifier.height(8.dp))
     }
 }
 

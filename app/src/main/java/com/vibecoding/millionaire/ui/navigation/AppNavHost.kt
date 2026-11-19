@@ -1,7 +1,9 @@
 package com.vibecoding.millionaire.ui.navigation
 
+import android.app.Activity
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -22,6 +24,7 @@ fun AppNavHost(
     navController: NavHostController,
     modifier: Modifier = Modifier,
 ) {
+    val activity = LocalContext.current as? Activity
     NavHost(
         navController = navController,
         startDestination = SplashRoute,
@@ -66,12 +69,14 @@ fun AppNavHost(
                 onRules = { navController.navigate(RulesRoute) },
                 onSettings = { navController.navigate(SettingsRoute(route.playerId)) },
                 onBack = { navController.popBackStack() },
+                onExitApp = { activity?.finish() },
             )
         }
 
         composable<GameRoute> {
             GameScreen(
-                onExit = { navController.popBackStack() },
+                // Leaving the game always returns to the menu; if the menu is not in the stack, close the app.
+                onExit = { if (!navController.popBackStack()) activity?.finish() },
                 onOpenResult = { resultId ->
                     navController.navigate(ResultRoute(resultId)) {
                         popUpTo<GameRoute> { inclusive = true }

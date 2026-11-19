@@ -1,5 +1,6 @@
 package com.vibecoding.millionaire.ui.menu
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.MaterialTheme
@@ -7,6 +8,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -29,17 +33,30 @@ fun MenuScreen(
     onRecords: () -> Unit,
     onRules: () -> Unit,
     onSettings: () -> Unit,
-    onBack: () -> Unit,
+    onBack: () -> Boolean,
+    onExitApp: () -> Unit,
     viewModel: MenuViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val player = state.player
+    var showExitDialog by remember { mutableStateOf(false) }
+
+    // System back: return to the player list when there is one, otherwise ask about closing the app.
+    BackHandler(enabled = !showExitDialog) { if (!onBack()) showExitDialog = true }
 
     LaunchedEffect(state.navigateToGame) {
-        if (state.navigateToGame) onPlay()
+        if (state.navigateToGame) {
+            onPlay()
+            // The flag is one-shot: without clearing it, coming back from the game opens a new game.
+            viewModel.onGameNavigated()
+        }
     }
 
-    ScreenScaffold(titleRes = R.string.title_menu, onBack = onBack) {
+    ScreenScaffold(
+        titleRes = R.string.title_menu,
+        // Nothing to pop back to means the menu is the root screen, so offer to close the app.
+        onBack = { if (!onBack()) showExitDialog = true },
+    ) {
         CardPanel {
             Text(
                 text = player?.nickname?.let { stringResource(R.string.menu_greeting, it) }
@@ -100,6 +117,17 @@ fun MenuScreen(
             dismissRes = R.string.action_cancel,
             onConfirm = viewModel::resetHistoryAndPlay,
             onDismiss = viewModel::dismissNotEnoughDialog,
+        )
+    }
+
+    if (showExitDialog) {
+        ConfirmDialog(
+            titleRes = R.string.app_name,
+            messageRes = R.string.confirm_exit_app,
+            confirmRes = R.string.action_exit,
+            dismissRes = R.string.action_cancel,
+            onConfirm = onExitApp,
+            onDismiss = { showExitDialog = false },
         )
     }
 }

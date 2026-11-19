@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="games_count">
+        <item quantity="one">%d гра</item>
+        <item quantity="few">%d гри</item>
+        <item quantity="many">%d ігор</item>
+        <item quantity="other">%d ігор</item>
+    </plurals>
+    <plurals name="minutes">
+        <item quantity="one">%d хвилина</item>
+        <item quantity="few">%d хвилини</item>
+        <item quantity="many">%d хвилин</item>
+        <item quantity="other">%d хвилин</item>
+    </plurals>
+</resources>

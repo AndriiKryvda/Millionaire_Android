@@ -4,10 +4,12 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -56,12 +58,16 @@ fun MillionaireTheme(content: @Composable () -> Unit) {
 /** The signature navy-to-purple gradient behind every screen (edge-to-edge safe). */
 @Composable
 fun GradientBackground(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .background(BackgroundGradient)
-            .safeDrawingPadding(),
-    ) {
-        content()
+    // Material3 does not provide a default content color through MaterialTheme, so any Text
+    // without an explicit color would fall back to black and be unreadable on the dark stage.
+    CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onBackground) {
+        Box(
+            modifier = modifier
+                .fillMaxSize()
+                .background(BackgroundGradient)
+                .safeDrawingPadding(),
+        ) {
+            content()
+        }
     }
 }

@@ -25,6 +25,7 @@ import com.vibecoding.millionaire.ui.common.ScreenScaffold
 import com.vibecoding.millionaire.ui.common.SectionTitle
 import com.vibecoding.millionaire.ui.theme.Gold
 import com.vibecoding.millionaire.ui.theme.GoldSoft
+import com.vibecoding.millionaire.ui.theme.TextSecondary
 
 @Composable
 fun SettingsScreen(
@@ -55,6 +56,7 @@ fun SettingsScreen(
             Text(
                 text = stringResource(R.string.reset_history_hint),
                 style = MaterialTheme.typography.bodyMedium,
+                color = TextSecondary,
             )
             GhostButton(
                 textRes = R.string.action_reset_history,

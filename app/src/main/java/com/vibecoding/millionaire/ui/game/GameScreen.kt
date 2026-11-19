@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -25,6 +26,9 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -156,6 +160,8 @@ private fun Centered(content: @Composable () -> Unit) {
 @Composable
 private fun GameContent(state: GameUiState, game: GameState, viewModel: GameViewModel) {
     val question = viewModel.currentQuestion(game)
+    // A lifeline is spent for the whole game, so the player confirms it before it is applied.
+    var pendingLifeline by remember { mutableStateOf<Lifeline?>(null) }
     Column(modifier = Modifier.fillMaxSize()) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(modifier = Modifier.weight(1f)) {
@@ -177,27 +183,78 @@ private fun GameContent(state: GameUiState, game: GameState, viewModel: GameView
 
         Spacer(modifier = Modifier.height(6.dp))
 
-        // Question and answers use the whole width of the screen; the prize ladder sits below them.
         QuestionCard(question = question, prizeRes = PrizeLadder.prizeFor(game.currentIndex))
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.TopStart) {
-            OptionsList(
-                game = game,
-                question = question,
-                viewModel = viewModel,
-                modifier = Modifier.verticalScroll(rememberScrollState()),
+        // Answers keep the free width; the prize ladder stands vertically to their right.
+        Row(modifier = Modifier.weight(1f)) {
+            Box(
+                modifier = Modifier.weight(1f),
+                contentAlignment = Alignment.TopStart,
+            ) {
+                OptionsList(
+                    game = game,
+                    question = question,
+                    viewModel = viewModel,
+                    modifier = Modifier.verticalScroll(rememberScrollState()),
+                )
+            }
+            Spacer(modifier = Modifier.width(8.dp))
+            PrizeLadderPanel(
+                currentIndex = game.currentIndex,
+                modifier = Modifier.fillMaxHeight(),
             )
         }
 
         Spacer(modifier = Modifier.height(12.dp))
-        PrizeLadderPanel(currentIndex = game.currentIndex)
-        Spacer(modifier = Modifier.height(12.dp))
-        LifelineRow(game = game, viewModel = viewModel)
+        LifelineRow(game = game) { lifeline ->
+            // Already spent lifelines just reopen their result; a fresh one needs a confirmation.
+            if (lifeline in game.usedLifelines || game.phase != Phase.AWAITING_ANSWER) {
+                viewModel.onLifeline(lifeline)
+            } else {
+                pendingLifeline = lifeline
+            }
+        }
         Spacer(modifier = Modifier.height(10.dp))
         BottomBar(game = game, viewModel = viewModel)
     }
+
+    val pending = pendingLifeline
+    if (pending != null) {
+        LifelineConfirmDialog(
+            lifeline = pending,
+            onConfirm = {
+                pendingLifeline = null
+                viewModel.onLifeline(pending)
+            },
+            onDismiss = { pendingLifeline = null },
+        )
+    }
+}
+
+/** Asks before a lifeline is spent, because every lifeline works only once per game. */
+@Composable
+private fun LifelineConfirmDialog(lifeline: Lifeline, onConfirm: () -> Unit, onDismiss: () -> Unit) {
+    val labelRes = when (lifeline) {
+        Lifeline.FIFTY_FIFTY -> R.string.lifeline_fifty
+        Lifeline.ASK_AUDIENCE -> R.string.lifeline_audience
+        Lifeline.PHONE_FRIEND -> R.string.lifeline_friend
+    }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.dialog_lifeline_title)) },
+        text = { Text(stringResource(R.string.dialog_lifeline_message, stringResource(labelRes))) },
+        confirmButton = {
+            TextButton(onClick = onConfirm) { Text(stringResource(R.string.action_use_lifeline), color = Gold) }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) }
+        },
+        containerColor = Navy,
+        titleContentColor = Gold,
+        textContentColor = Color.White,
+    )
 }
 
 @Composable
@@ -270,7 +327,7 @@ private fun visualState(game: GameState, option: com.vibecoding.millionaire.doma
     }
 
 @Composable
-private fun LifelineRow(game: GameState, viewModel: GameViewModel) {
+private fun LifelineRow(game: GameState, onTap: (Lifeline) -> Unit) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(14.dp),
@@ -279,15 +336,15 @@ private fun LifelineRow(game: GameState, viewModel: GameViewModel) {
         LifelineButton(
             label = stringResource(R.string.lifeline_fifty),
             used = Lifeline.FIFTY_FIFTY in game.usedLifelines,
-        ) { viewModel.onLifeline(Lifeline.FIFTY_FIFTY) }
+        ) { onTap(Lifeline.FIFTY_FIFTY) }
         LifelineButton(
             label = stringResource(R.string.lifeline_audience),
             used = Lifeline.ASK_AUDIENCE in game.usedLifelines,
-        ) { viewModel.onLifeline(Lifeline.ASK_AUDIENCE) }
+        ) { onTap(Lifeline.ASK_AUDIENCE) }
         LifelineButton(
             label = stringResource(R.string.lifeline_friend),
             used = Lifeline.PHONE_FRIEND in game.usedLifelines,
-        ) { viewModel.onLifeline(Lifeline.PHONE_FRIEND) }
+        ) { onTap(Lifeline.PHONE_FRIEND) }
         Spacer(modifier = Modifier.weight(1f))
         Text(
             text = stringResource(R.string.questions_left, PrizeLadder.QUESTIONS_COUNT - game.currentIndex),

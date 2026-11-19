@@ -48,6 +48,7 @@
 
     <string name="menu_greeting">Вітаємо, %1$s!</string>
     <string name="menu_available_questions">Доступні питання: %1$d із %2$d</string>
+    <string name="menu_version">Версія %1$s</string>
     <string name="action_new_game">Нова гра</string>
     <string name="action_records">Рекорди</string>
     <string name="action_rules">Правила гри</string>
@@ -67,7 +68,7 @@
 
     <string name="game_question_progress">Питання %1$d із %2$d</string>
     <string name="prize_value">%1$s ₴</string>
-    <string name="ladder_title">Сходинки призів</string>
+    <string name="ladder_title">Призи</string>
     <string name="action_confirm">Підтвердити</string>
     <string name="action_walk_away">Забрати %1$s</string>
     <string name="action_next">Далі</string>
@@ -86,6 +87,9 @@
     <string name="lifeline_friend">Друг</string>
     <string name="dialog_exit_title">Вийти з гри?</string>
     <string name="dialog_exit_message">Поточний раунд не буде збережено.</string>
+    <string name="dialog_lifeline_title">Використати підказку?</string>
+    <string name="dialog_lifeline_message">Підказка «%1$s» доступна лише один раз за гру. Використати її зараз?</string>
+    <string name="action_use_lifeline">Так, використати</string>
     <string name="dialog_walk_away_title">Забрати виграш?</string>
     <string name="dialog_walk_away_message">Ви забираєте %1$s і завершуєте гру.</string>
     <string name="dialog_audience_title">Думка зали</string>
@@ -119,7 +123,7 @@
     <string name="rules_intro">Гра нагадує телевізійну вікторину, але працює без інтернету на вашому телефоні.</string>
     <string name="rules_goal_title">Мета гри</string>
     <string name="rules_goal_body">Дайте 15 послідовних правильних відповідей і дійдіть до суми 1 000 гривень. Гроші віртуальні — це лише гра.</string>
-    <string name="rules_ladder_title">Сходинки призів</string>
+    <string name="rules_ladder_title">Призи</string>
     <string name="rules_ladder_body">Кожне правильне питання піднімає вас сходинкою вгору: 1, 2, 3, 5, 10, 15, 25, 50, 75, 100, 150, 250, 400, 600 і 1 000. Суми на 5-му та 10-му питаннях є гарантованими — їх ви не втратите навіть після помилки.</string>
     <string name="rules_answer_title">Як відповідати</string>
     <string name="rules_answer_body">Спершу оберіть варіант — він лише підсвітиться. Потисніть «Підтвердити», і через мить стане відомо, чи правильна відповідь. Після правильної відповіді переходьте до наступного питання.</string>

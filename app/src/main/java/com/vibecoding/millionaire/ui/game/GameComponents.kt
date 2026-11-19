@@ -13,17 +13,17 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -41,6 +41,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -107,41 +108,48 @@ fun AnswerOptionButton(
     }
 }
 
-/** Prize ladder shown under the answers: a horizontal row from 1 ₴ up to 1 000 ₴. */
+/** Prize ladder shown to the right of the answers: a vertical column, lowest step at the bottom. */
 @Composable
 fun PrizeLadderPanel(currentIndex: Int, modifier: Modifier = Modifier) {
-    val listState = rememberLazyListState()
-    Column(modifier = modifier.fillMaxWidth()) {
+    val scrollState = rememberScrollState()
+    val density = LocalDensity.current
+    val stepHeightPx = with(density) { (LadderRowHeight + LadderRowGap).toPx() }
+    Column(modifier = modifier.width(LadderPanelWidth)) {
         Text(
             text = stringResource(R.string.ladder_title),
             style = MaterialTheme.typography.labelSmall,
             color = TextSecondary,
             modifier = Modifier.padding(bottom = 4.dp),
         )
-        LazyRow(
-            state = listState,
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)
+                .verticalScroll(scrollState),
+            verticalArrangement = Arrangement.spacedBy(LadderRowGap),
         ) {
-            itemsIndexed(PrizeLadder.prizes) { index, prize ->
-                LadderChip(
+            // Highest prize on top, so the ladder is drawn from the last prize backwards.
+            PrizeLadder.prizes.indices.reversed().forEach { index ->
+                LadderRow(
                     index = index,
-                    prize = prize,
+                    prize = PrizeLadder.prizes[index],
                     currentIndex = currentIndex,
                 )
             }
         }
     }
-    LaunchedEffect(currentIndex) {
-        // Keep the running step on screen by scrolling a few steps ahead of it into view.
-        listState.animateScrollToItem((currentIndex - LADDER_LEADING_STEPS).coerceAtLeast(0))
+    LaunchedEffect(currentIndex, stepHeightPx) {
+        // Keep the running step visible; the offset clamps to 0 when the whole ladder fits on screen.
+        scrollState.animateScrollTo(((PrizeLadder.prizes.lastIndex - currentIndex) * stepHeightPx).toInt())
     }
 }
 
-private const val LADDER_LEADING_STEPS = 3
+private val LadderPanelWidth = 84.dp
+private val LadderRowHeight = 20.dp
+private val LadderRowGap = 3.dp
 
 @Composable
-private fun LadderChip(index: Int, prize: Int, currentIndex: Int) {
+private fun LadderRow(index: Int, prize: Int, currentIndex: Int) {
     val isCurrent = index == currentIndex
     val isPassed = index < currentIndex
     val isSafe = PrizeLadder.isSafeHaven(index)
@@ -158,18 +166,19 @@ private fun LadderChip(index: Int, prize: Int, currentIndex: Int) {
     }
     Box(
         modifier = Modifier
-            .width(60.dp)
-            .height(24.dp)
+            .fillMaxWidth()
+            .height(LadderRowHeight)
             .clip(RoundedCornerShape(5.dp))
             .background(background)
             .border(1.dp, Purple.copy(alpha = 0.5f), RoundedCornerShape(5.dp)),
-        contentAlignment = Alignment.Center,
+        contentAlignment = Alignment.CenterEnd,
     ) {
         Text(
             text = stringResource(R.string.prize_value, formatGroups(prize)),
             style = MaterialTheme.typography.labelSmall,
             color = textColor,
             maxLines = 1,
+            modifier = Modifier.padding(horizontal = 6.dp),
         )
     }
 }
@@ -233,12 +242,19 @@ fun AudienceChartDialog(
     )
 }
 
+private val ChartAreaHeight = 196.dp
+private val ChartBarMaxHeight = 150.dp
+private val ChartBarMinHeight = 4.dp
+
 @Composable
 private fun AudienceChart(percentages: Map<AnswerOption, Int>, displayOrder: List<AnswerOption>) {
+    // The leading answer owns the whole bar height, every other bar shrinks strictly in
+    // proportion to it. Heights are plain dp so they can never collapse to equal sizes.
+    val maxPercent = (percentages.values.maxOrNull() ?: 0).coerceAtLeast(1)
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(170.dp)
+            .height(ChartAreaHeight)
             .padding(top = 8.dp),
         verticalAlignment = Alignment.Bottom,
         horizontalArrangement = Arrangement.spacedBy(14.dp),
@@ -246,8 +262,11 @@ private fun AudienceChart(percentages: Map<AnswerOption, Int>, displayOrder: Lis
         displayOrder.forEach { option ->
             val percent = percentages[option] ?: 0
             Column(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .weight(1f),
                 horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Bottom,
             ) {
                 Text(
                     text = "$percent%",
@@ -258,7 +277,10 @@ private fun AudienceChart(percentages: Map<AnswerOption, Int>, displayOrder: Lis
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .weight(if (percent > 0) percent.toFloat() else 0.02f)
+                        .height(
+                            (ChartBarMaxHeight * percent / maxPercent)
+                                .coerceAtLeast(ChartBarMinHeight)
+                        )
                         .clip(RoundedCornerShape(topStart = 6.dp, topEnd = 6.dp))
                         .background(PlateGradient),
                 )

@@ -3,6 +3,7 @@ package com.vibecoding.millionaire.ui.menu
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -14,8 +15,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.vibecoding.millionaire.BuildConfig
 import com.vibecoding.millionaire.R
 import com.vibecoding.millionaire.ui.common.CardPanel
 import com.vibecoding.millionaire.ui.common.ConfirmDialog
@@ -107,6 +111,14 @@ fun MenuScreen(
             GhostButton(textRes = R.string.action_rules, onClick = onRules, modifier = Modifier.fillMaxWidth())
             GhostButton(textRes = R.string.action_settings, onClick = onSettings, modifier = Modifier.fillMaxWidth())
         }
+
+        Text(
+            text = stringResource(R.string.menu_version, BuildConfig.VERSION_NAME),
+            style = MaterialTheme.typography.labelSmall,
+            color = TextSecondary,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth(),
+        )
     }
 
     if (state.showNotEnoughDialog) {

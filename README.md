@@ -116,6 +116,21 @@ echo "sdk.dir=$($env:LOCALAPPDATA -replace '\\','\\' -replace '^([A-Za-z]):','$1
 `C:\Program Files\Android\openjdk` → `C:\Program Files\Java` → `~\.gradle\jdks`), виставляє
 `JAVA_HOME`, `ANDROID_HOME` і запускає Gradle wrapper.
 
+Після успішної збірки скрипт копіює свіжі APK у `dist\` з версією в назві
+(`millionaire-debug-0.1.1-20261120-0113.apk`) і переписує `dist\index.html` — сторінку з
+переліком усіх APK у `dist`, найновіший зверху.
+
+#### Версія збірки
+
+Версія живе у `gradle.properties` (`appVersionName` / `appVersionCode`) — це єдине джерело
+правди, звідки її бере `app/build.gradle.kts`, а далі `BuildConfig.VERSION_NAME` (видно в
+меню гри та в «Налаштування → Про застосунок»). Перед кожною збіркою скрипт піднімає
+патч на один (`0.1.0` → `0.1.1`) і `appVersionCode` на один. Зібрати без зміни версії:
+
+```powershell
+.\scripts\build-apk.ps1 -BumpVersion:$false
+```
+
 ### 6.2 Вручну
 
 ```powershell

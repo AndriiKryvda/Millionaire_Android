@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Builds the APK (and runs the tests) of "Khto khochhe stati tysiachnykom?".
+    Builds the APK (and runs the tests) of "Yak stati milyonerom".
 .DESCRIPTION
     Picks a JDK 17..23 automatically (Gradle 8.x does not run on JDK 24+), then delegates to the
     Gradle wrapper. Extra tasks can be passed with -Tasks.
@@ -17,11 +17,16 @@ param(
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
 
+# When invoked through powershell -File, "-Tasks a,b" arrives as one string; split it.
+$Tasks = @($Tasks | ForEach-Object { $_ -split ',' } | ForEach-Object { $_.Trim() } | Where-Object { $_ })
+
 function Test-Jdk([string] $path) {
     if ([string]::IsNullOrWhiteSpace($path)) { return $false }
     $javaExe = Join-Path $path 'bin\java.exe'
     if (-not (Test-Path $javaExe)) { return $false }
-    $version = (& $javaExe -version 2>&1 | Select-Object -First 1) -join ''
+    # java -version writes to stderr; merge it in cmd so PowerShell does not raise
+    # a NativeCommandError under $ErrorActionPreference = 'Stop'.
+    $version = ((cmd /c "`"$javaExe`" -version 2>&1") | Select-Object -First 1) -join ''
     if ($version -match '"(\d+)') {
         $major = [int] $Matches[1]
         return $major -ge 17 -and $major -le 23
@@ -54,5 +59,7 @@ if (-not $env:ANDROID_HOME -and -not $env:ANDROID_SDK_ROOT) {
 
 $gradlew = Join-Path $projectRoot 'gradlew.bat'
 Write-Host "Gradle tasks: $($Tasks -join ' ')"
+# Gradle reports warnings on stderr; do not let them abort the script.
+$ErrorActionPreference = 'Continue'
 & $gradlew @Tasks --console=plain
 exit $LASTEXITCODE

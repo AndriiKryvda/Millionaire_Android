@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Хто хоче стати тисячником?</string>
+    <string name="app_name">Як стати мільйонером</string>
     <string name="splash_subtitle">Офлайн-вікторина українською</string>
     <string name="splash_loading">Підготовка питань…</string>
     <string name="loading">Завантаження…</string>

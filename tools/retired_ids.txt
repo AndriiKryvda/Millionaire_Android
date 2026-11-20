@@ -1,1 +1,8 @@
 # IDs of deleted questions, one per line. These IDs must never be reused.
+3051
+3077
+3083
+3091
+3092
+3096
+3099

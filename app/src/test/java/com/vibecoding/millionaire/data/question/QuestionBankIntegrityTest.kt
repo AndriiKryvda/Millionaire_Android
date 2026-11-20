@@ -23,7 +23,7 @@ class QuestionBankIntegrityTest {
     @Test
     fun `the shipped bank parses without a single skipped question`() {
         assertEquals(emptyList<String>(), parsed.skipped)
-        assertEquals(1000, parsed.questions.size)
+        assertEquals(5000, parsed.questions.size)
     }
 
     @Test
@@ -63,7 +63,7 @@ class QuestionBankIntegrityTest {
     fun `correct answer letters are spread evenly`() {
         val counts = AnswerOption.entries.associateWith { option -> parsed.questions.count { it.correct == option } }
         for ((option, count) in counts) {
-            assertTrue("$option appears $count times", count in 200..300)
+            assertTrue("$option appears $count times", count in 1100..1400)
         }
     }
 

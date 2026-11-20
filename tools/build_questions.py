@@ -192,15 +192,17 @@ def validate(items, errors, retired, answers):
 
 
 def similar_pairs(items, threshold=0.85):
-    norm = [normalize(it["text"]) for it in items]
+    groups = defaultdict(list)
+    for it in items:
+        groups[normalize(it["correct"])].append((normalize(it["text"]), it))
     pairs = []
-    for i in range(len(items)):
-        for j in range(i + 1, len(items)):
-            if normalize(items[i]["correct"]) != normalize(items[j]["correct"]):
-                continue
-            sm = difflib.SequenceMatcher(None, norm[i], norm[j])
-            if sm.real_quick_ratio() >= threshold and sm.quick_ratio() >= threshold and sm.ratio() >= threshold:
-                pairs.append((items[i]["where"], items[j]["where"], items[i]["text"], items[j]["text"]))
+    for group in groups.values():
+        for i in range(len(group)):
+            for j in range(i + 1, len(group)):
+                (na, a), (nb, b) = group[i], group[j]
+                sm = difflib.SequenceMatcher(None, na, nb)
+                if sm.real_quick_ratio() >= threshold and sm.quick_ratio() >= threshold and sm.ratio() >= threshold:
+                    pairs.append((a["where"], b["where"], a["text"], b["text"]))
     return pairs
 
 

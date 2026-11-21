@@ -105,7 +105,7 @@ $gradleExit = $LASTEXITCODE
 
 # --- Publish the APK into dist -----------------------------------------------
 if ($gradleExit -eq 0) {
-    $apkRoot = Join-Path $projectRoot 'app\build\outputs\apk'
+    $apkRoot = Join-Path $projectRoot 'androidApp\build\outputs\apk'
     $built = @(Get-ChildItem -Path $apkRoot -Recurse -Filter '*.apk' -ErrorAction SilentlyContinue | Where-Object { $_.Name -notlike '*-unsigned.apk' })
     if ($built.Count -eq 0) {
         Write-Warning 'The build produced no APK - nothing was published to dist.'

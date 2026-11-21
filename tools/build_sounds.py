@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generates the small self-made sound effects used by the game (res/raw/*.wav).
+"""Generates the small self-made sound effects used by the game (composeResources/files/sounds/*.wav).
 
 Everything is synthesised locally - no third-party assets, no network access.
 Run:  python tools/build_sounds.py
@@ -13,7 +13,7 @@ import wave
 
 SAMPLE_RATE = 22050
 AMPLITUDE = 12000
-OUT_DIR = os.path.join(os.path.dirname(__file__), "..", "app", "src", "main", "res", "raw")
+OUT_DIR = os.path.join(os.path.dirname(__file__), "..", "shared", "src", "commonMain", "composeResources", "files", "sounds")
 
 
 def tone(freq: float, duration: float, decay: float = 6.0, harmonics: float = 0.0) -> list[float]:

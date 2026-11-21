@@ -9,18 +9,19 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.rememberNavController
 import com.vibecoding.millionaire.ui.navigation.AppNavHost
 import com.vibecoding.millionaire.ui.theme.MillionaireTheme
-import dagger.hilt.android.AndroidEntryPoint
 
-@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+        val graph = (application as MillionaireApp).graph
         setContent {
             MillionaireTheme {
                 AppNavHost(
+                    graph = graph,
                     navController = rememberNavController(),
+                    onExitApp = { finish() },
                     modifier = Modifier.fillMaxSize(),
                 )
             }

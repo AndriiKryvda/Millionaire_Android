@@ -24,7 +24,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 SRC_DIR = ROOT / "tools" / "questions_src"
-OUT_DIR = ROOT / "app" / "src" / "main" / "assets" / "questions"
+OUT_DIR = ROOT / "shared" / "src" / "commonMain" / "composeResources" / "files" / "questions"
 RETIRED_FILE = ROOT / "tools" / "retired_ids.txt"
 ANSWERS_FILE = ROOT / "tools" / "answers.txt"
 

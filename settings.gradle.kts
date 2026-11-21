@@ -16,3 +16,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "Millionaire"
 include(":androidApp")
+include(":shared")

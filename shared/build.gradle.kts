@@ -85,6 +85,9 @@ dependencies {
 android {
     namespace = "com.vibecoding.millionaire.shared"
     compileSdk = 36
+    // Pin to the build-tools actually installed in the local SDK (36.0.0); AGP 8.13 would
+    // otherwise default to 35.0.0 and try to auto-download it.
+    buildToolsVersion = "36.0.0"
 
     defaultConfig {
         minSdk = 26

@@ -42,9 +42,12 @@ fun AppNavHost(
                     }
                 },
                 onToMenu = { playerId ->
-                    navController.navigate(MenuRoute(playerId)) {
+                    // Keep the player chooser in the back stack so the menu's back arrow returns
+                    // to it (pick another player / create a new one) instead of exiting the app.
+                    navController.navigate(PlayersRoute) {
                         popUpTo(SplashRoute) { inclusive = true }
                     }
+                    navController.navigate(MenuRoute(playerId))
                 },
             )
         }
@@ -129,7 +132,8 @@ fun AppNavHost(
             SettingsScreen(
                 playerId = entry.toRoute<SettingsRoute>().playerId,
                 graph = graph,
-                onBack = { navController.popBackStack() },
+                // Always return to the player's main menu, never exit the app.
+                onBack = { navController.popBackStack<MenuRoute>(inclusive = false) },
             )
         }
     }

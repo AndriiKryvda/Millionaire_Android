@@ -38,11 +38,23 @@ Version rules:
 - `gradle.properties` (`appVersionName` like `0.1.6`, `appVersionCode` integer) is the only version source.
 - Android refuses to install an APK whose `versionCode` is not higher than the installed one — bump before shipping a new release, unless intentionally rebuilding the same version that has not shipped yet.
 
-## iOS build flow (macOS only)
+## iOS build flow (GitHub Actions, macOS runner)
 
-iOS builds cannot be produced on this Windows host. On macOS, build the iOS app that wraps the Compose Multiplatform `:shared` module, then:
-1. Place the artifact (`.ipa`/`.zip`) in `releases/iOS/`, keeping only the newest file.
-2. Update the download links in the root `README.md`.
+iOS builds cannot be produced on this Windows host. The official path is the
+`iOS Release Build` workflow (`.github/workflows/ios-release.yml`), run manually from
+the Actions tab (`workflow_dispatch`). It:
+
+1. Generates the Xcode project from `iosApp/project.yml` with XcodeGen (the `.xcodeproj` is generated, never committed).
+2. Builds the `iosApp` SwiftUI shell (which links the static `Shared` framework via `./gradlew :shared:embedAndSignAppleFrameworkForXcode`) for `iphoneos`, Release, **unsigned** (no Apple Developer cert in CI).
+3. Packages `Payload/Millionaire.app` into `millionaire-<version>-unsigned.ipa` (version read from `gradle.properties`).
+4. Deletes older `.ipa` files in `releases/iOS/`, commits the new one and pushes to `main`.
+
+The unsigned `.ipa` cannot be installed by double-click; it is meant for sideloading tools
+(AltStore/Sideloadly with a free Apple ID) or for later re-signing. To ship a signed build,
+add signing certs/secrets to the workflow and drop `CODE_SIGNING_ALLOWED=NO`.
+
+Manual alternative on a real Mac: `brew install xcodegen && cd iosApp && xcodegen generate`,
+then open `iosApp.xcodeproj` in Xcode and run the `iosApp` scheme.
 
 ## After every release
 

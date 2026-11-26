@@ -26,8 +26,12 @@ Committed build layout — each platform folder holds **only the latest** artifa
 ```
 releases/
 ├── Android/   # latest release APK: millionaire-<version>.apk
-└── iOS/       # latest iOS build (produced on macOS; see releases/iOS/README.md)
+└── iOS/       # latest iOS build (built by the "iOS Release Build" GitHub Actions workflow)
 ```
+
+iOS builds cannot run on Windows: the `iosApp` SwiftUI shell (generated from `iosApp/project.yml`
+with XcodeGen — the `.xcodeproj` is never committed) is built on a macOS runner by
+`.github/workflows/ios-release.yml`, which packages an unsigned `.ipa` and commits it to `releases/iOS/`.
 
 After shipping a new APK, update the download link at the top of `README.md`.
 

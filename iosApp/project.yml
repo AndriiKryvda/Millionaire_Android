@@ -1,0 +1,46 @@
+# XcodeGen spec for the iOS shell app. The .xcodeproj is generated, never committed:
+#   cd iosApp && xcodegen generate
+# CI (see .github/workflows/ios-release.yml) regenerates it on every build.
+name: iosApp
+options:
+  createIntermediateGroups: true
+  deploymentTarget:
+    iOS: "16.0"
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    GENERATE_INFOPLIST_FILE: YES
+    # The Gradle build script below must be able to run the Kotlin compiler outside the
+    # Xcode script sandbox (default ON since Xcode 14 and it breaks KMP embed scripts).
+    ENABLE_USER_SCRIPT_SANDBOXING: NO
+    CODE_SIGN_STYLE: Automatic
+targets:
+  iosApp:
+    type: application
+    platform: iOS
+    productName: Millionaire
+    sources:
+      - path: Sources
+      - path: Assets.xcassets
+    dependencies:
+      # Linked (not embedded): the framework is static, see shared/build.gradle.kts.
+      - framework: ../shared/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)/Shared.framework
+        embed: false
+        codeSign: false
+    preBuildScripts:
+      - name: Compile Kotlin Shared Framework
+        basedOnDependencyAnalysis: false
+        script: |
+          cd "$SRCROOT/.."
+          ./gradlew :shared:embedAndSignAppleFrameworkForXcode
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.vibecoding.millionaire
+        PRODUCT_NAME: Millionaire
+        MARKETING_VERSION: 0.1.6
+        CURRENT_PROJECT_VERSION: 7
+        INFOPLIST_KEY_CFBundleDisplayName: "Мільйонер"
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
+        FRAMEWORK_SEARCH_PATHS:
+          - $(SRCROOT)/../shared/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)

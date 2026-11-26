@@ -164,8 +164,12 @@ $env:Path = "$env:JAVA_HOME\bin;$env:Path"
 ```
 releases/
 ├── Android/   # millionaire-<version>.apk — найновіший APK (переписується скриптом збірки)
-└── iOS/       # найновіша iOS-збірка (створюється на macOS; див. releases/iOS/README.md)
+└── iOS/       # millionaire-<version>-unsigned.ipa — найновіша iOS-збірка
 ```
+
+iOS-збірку створює GitHub Actions workflow **iOS Release Build** (вкладка Actions →
+Run workflow): він збирає застосунок на macOS-раннері й сам викладає `.ipa` у `releases/iOS/`.
+Без підпису розробника `.ipa` призначений для встановлення через AltStore/Sideloadly.
 
 ### 6.4 Підпис релізного APK
 

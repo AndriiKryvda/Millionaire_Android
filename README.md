@@ -7,7 +7,7 @@
 Повний опис вимог — у [REQUIREMENTS.md](REQUIREMENTS.md), архітектурні рішення —
 у [TECHNICAL_DESIGN.md](TECHNICAL_DESIGN.md).
 
-**Завантажити APK:** [millionaire-0.1.5.apk](releases/millionaire-0.1.5.apk) (debug-збірка, Android 8.0+;
+**Завантажити APK:** [millionaire-0.1.6.apk](releases/Android/millionaire-0.1.6.apk) (debug-збірка, Android 8.0+;
 дозвольте встановлення з невідомих джерел).
 
 ---
@@ -121,7 +121,9 @@ echo "sdk.dir=$($env:LOCALAPPDATA -replace '\\','\\' -replace '^([A-Za-z]):','$1
 
 Після успішної збірки скрипт копіює свіжі APK у `dist\` з версією в назві
 (`millionaire-debug-0.1.1-20261120-0113.apk`) і переписує `dist\index.html` — сторінку з
-переліком усіх APK у `dist`, найновіший зверху.
+переліком усіх APK у `dist`, найновіший зверху. Найновіший APK додатково замінює
+єдиний файл у `releases\Android\` (`millionaire-<version>.apk`) — це закомічена
+«остання збірка» для поширення.
 
 #### Версія збірки
 
@@ -155,6 +157,15 @@ $env:Path = "$env:JAVA_HOME\bin;$env:Path"
 
 Релізний APK менший у ~8 разів, бо R8 мініфікує код і стискає ресурси.
 База з 8000 питань (~4,1 МБ JSON) і звуки лежать усередині APK, тому гра працює без мережі.
+
+Закомічені артефакти для поширення лежать у `releases\` — у кожній папці зберігається
+**лише найновіша** збірка:
+
+```
+releases/
+├── Android/   # millionaire-<version>.apk — найновіший APK (переписується скриптом збірки)
+└── iOS/       # найновіша iOS-збірка (створюється на macOS; див. releases/iOS/README.md)
+```
 
 ### 6.4 Підпис релізного APK
 

@@ -19,7 +19,17 @@ Always build through the wrapper script, not bare `gradlew` — it auto-selects 
 .\scripts\build-apk.ps1 -BumpVersion:$false    # build without bumping the version
 ```
 
-The script bumps `appVersionName`/`appVersionCode` in `gradle.properties` before every build (single source of truth; `app/build.gradle.kts` reads them into `BuildConfig`), then copies APKs into `dist\` and regenerates `dist\index.html`. `dist/` is gitignored; only `releases/*.apk` is committed.
+The script bumps `appVersionName`/`appVersionCode` in `gradle.properties` before every build (single source of truth; `androidApp/build.gradle.kts` reads them into `BuildConfig`), copies APKs into `dist\` (gitignored) and regenerates `dist\index.html`, then publishes the newest APK as `releases\Android\millionaire-<version>.apk` and deletes older APKs there.
+
+Committed build layout — each platform folder holds **only the latest** artifact:
+
+```
+releases/
+├── Android/   # latest release APK: millionaire-<version>.apk
+└── iOS/       # latest iOS build (produced on macOS; see releases/iOS/README.md)
+```
+
+After shipping a new APK, update the download link at the top of `README.md`.
 
 Direct Gradle (after setting `JAVA_HOME` to a JDK 17–21):
 
@@ -73,3 +83,5 @@ GameResultRepository (Room) → ResultScreen / RecordsScreen
 **Always increment the version before building a release APK** — Android refuses to install an APK whose `versionCode` is not higher than the installed one, so a release built at the same version as the last shipped APK cannot be installed over it. `scripts/build-apk.ps1` bumps `appVersionName`/`appVersionCode` automatically before each build; if you build via bare `gradlew.bat assembleRelease` (or pass `-BumpVersion:$false`), bump `gradle.properties` yourself first.
 
 `assembleRelease` produces an **unsigned** APK unless `keystore.properties` (gitignored) exists in the repo root with `RELEASE_STORE_FILE`, `RELEASE_STORE_PASSWORD`, `RELEASE_KEY_ALIAS`, `RELEASE_KEY_PASSWORD` (see README §6.4).
+
+Every successful `scripts/build-apk.ps1` run also refreshes the committed Android artifact: the newest APK is copied to `releases\Android\millionaire-<version>.apk` and older APKs are deleted there, so the folder always holds exactly one file. iOS builds cannot be produced on this Windows host; when one is built on macOS, place it in `releases\iOS\` (keep only the newest) — see `releases\iOS\README.md`.

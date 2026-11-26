@@ -1,9 +1,11 @@
-<#
+﻿<#
 .SYNOPSIS
     Builds the APK (and runs the tests) of "Yak stati milyonerom".
 .DESCRIPTION
     Picks a JDK 17..23 automatically (Gradle 8.x does not run on JDK 24+), then delegates to the
     Gradle wrapper. Extra tasks can be passed with -Tasks.
+    After a successful build the APKs are published to dist\ (timestamped copies + index.html)
+    and the newest APK replaces the single "latest" APK in releases\Android.
 .EXAMPLE
     .\scripts\build-apk.ps1                       # testDebugUnitTest + assembleDebug
     .\scripts\build-apk.ps1 -Tasks assembleRelease
@@ -146,6 +148,19 @@ if ($gradleExit -eq 0) {
         $page += '</html>'
         [System.IO.File]::WriteAllText((Join-Path $distDir 'index.html'), ($page -join [Environment]::NewLine), $utf8NoBom)
         Write-Host ('Updated ' + (Join-Path $distDir 'index.html')) -ForegroundColor Green
+
+        # --- Publish the latest APK into releases\Android --------------------
+        # releases\Android holds exactly one APK: the latest build (a release
+        # APK wins over debug when both were built). Older APKs are deleted so
+        # the folder always contains only the newest file.
+        $releaseDir = Join-Path $projectRoot 'releases\Android'
+        if (-not (Test-Path $releaseDir)) { New-Item -ItemType Directory -Path $releaseDir | Out-Null }
+        $latest = @($built | Where-Object { $_.Directory.Name -eq 'release' } | Select-Object -First 1)
+        if ($latest.Count -eq 0) { $latest = @($built) }
+        Get-ChildItem -Path $releaseDir -Filter '*.apk' -ErrorAction SilentlyContinue | Remove-Item -Force
+        $releaseTarget = 'millionaire-' + $versionName + '.apk'
+        Copy-Item -LiteralPath $latest[0].FullName -Destination (Join-Path $releaseDir $releaseTarget) -Force
+        Write-Host ('Published releases\Android\' + $releaseTarget) -ForegroundColor Green
     }
 }
 
